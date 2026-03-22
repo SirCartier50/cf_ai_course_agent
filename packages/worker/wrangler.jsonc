@@ -1,0 +1,36 @@
+{
+	"name": "cf-ai-course-agent",
+	"main": "src/index.ts",
+	"compatibility_date": "2024-12-02",
+	"observability": {
+		"enabled": true
+	},
+	"ai": {
+		"binding": "AI"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "course-agent-db",
+			"database_id": "4a5f3708-2fa3-4222-8fff-8f88814c12ad"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "KV",
+			"id": "882d3317ca6a4f4eb8f2df569288ef30"
+		}
+	],
+	"workflows": [
+		{
+			"name": "syllabus-parse-workflow",
+			"binding": "SYLLABUS_PARSE_WORKFLOW",
+			"class_name": "SyllabusParseWorkflow"
+		},
+		{
+			"name": "question-triage-workflow",
+			"binding": "QUESTION_TRIAGE_WORKFLOW",
+			"class_name": "QuestionTriageWorkflow"
+		}
+	]
+}
