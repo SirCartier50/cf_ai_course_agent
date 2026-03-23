@@ -30,9 +30,9 @@ An AI-powered course assistant platform built on Cloudflare's developer stack. P
 ```
 cf_ai_course_agent/
 ├── packages/
-│   ├── shared/          # Shared TypeScript types
 │   ├── worker/          # Cloudflare Worker (API + AI agent)
 │   └── web/             # React frontend (Vite)
+├── test-data/           # Sample syllabus and lecture materials for testing
 └── package.json         # npm workspaces monorepo
 ```
 
@@ -103,19 +103,23 @@ Open http://localhost:5173
 npx wrangler d1 create course-agent-db
 npx wrangler kv namespace create KV
 
-# Update wrangler.jsonc with your binding IDs
+# Update wrangler.toml with your D1 database_id and KV id
 
 # Run migrations on remote D1
 cd packages/worker
-npx wrangler d1 execute course-agent-db --remote --file=./src/db/schema.sql
+npx wrangler d1 execute course-agent-db --remote --file=src/db/schema.sql
 
 # Deploy worker
 npx wrangler deploy
 
+# Set secrets
+npx wrangler secret put JWT_SECRET
+npx wrangler secret put RESEND_API_KEY
+
 # Build and deploy frontend
 cd ../web
-npm run build
-npx wrangler pages deploy dist
+VITE_API_URL=https://cf-ai-course-agent.YOUR_SUBDOMAIN.workers.dev/api npm run build
+npx wrangler pages deploy dist --project-name=course-agent
 ```
 
 ## Database Schema

@@ -6,8 +6,6 @@ export const syllabusRoutes = new Hono<{ Bindings: Env }>();
 
 syllabusRoutes.use('*', requireAuth());
 
-// Upload syllabus (professor only)
-// Accepts either JSON { text } or multipart form with a `file` field (.txt or .md)
 syllabusRoutes.post('/:courseId/syllabus', requireRole('professor'), async (c) => {
   const courseId = c.req.param('courseId');
   let text: string | undefined;
@@ -15,7 +13,6 @@ syllabusRoutes.post('/:courseId/syllabus', requireRole('professor'), async (c) =
   const contentType = c.req.header('content-type') || '';
 
   if (contentType.includes('multipart/form-data')) {
-    // File upload mode
     const formData = await c.req.formData();
     const file = formData.get('file');
     if (!file || !(file instanceof File)) {
@@ -26,15 +23,11 @@ syllabusRoutes.post('/:courseId/syllabus', requireRole('professor'), async (c) =
     if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
       text = await file.text();
     } else if (fileName.endsWith('.pdf')) {
-      // PDF binary parsing is not available in Workers.
-      // Read raw text content as a best-effort. For best results,
-      // copy-paste the PDF text using the JSON { text } mode instead.
       text = await file.text();
     } else {
       return c.json({ error: 'Unsupported file type. Please upload .txt or .md files, or paste PDF text using JSON mode.' }, 400);
     }
   } else {
-    // JSON paste mode
     const body = await c.req.json();
     text = body.text;
   }
@@ -43,7 +36,6 @@ syllabusRoutes.post('/:courseId/syllabus', requireRole('professor'), async (c) =
     return c.json({ error: 'Syllabus text is required' }, 400);
   }
 
-  // Check course ownership
   const course = await c.env.DB.prepare(
     'SELECT id FROM courses WHERE id = ? AND professor_id = ?'
   ).bind(courseId, c.get('userId')).first();
@@ -52,7 +44,6 @@ syllabusRoutes.post('/:courseId/syllabus', requireRole('professor'), async (c) =
     return c.json({ error: 'Course not found or not authorized' }, 404);
   }
 
-  // Upsert syllabus
   const existing = await c.env.DB.prepare(
     'SELECT id FROM syllabi WHERE course_id = ?'
   ).bind(courseId).first<{ id: string }>();
@@ -64,7 +55,6 @@ syllabusRoutes.post('/:courseId/syllabus', requireRole('professor'), async (c) =
       'UPDATE syllabi SET raw_text = ?, status = ?, parsed_at = NULL WHERE id = ?'
     ).bind(text, 'pending', syllabusId).run();
 
-    // Clear old parsed data
     await c.env.DB.batch([
       c.env.DB.prepare('DELETE FROM syllabus_deadlines WHERE syllabus_id = ?').bind(syllabusId),
       c.env.DB.prepare('DELETE FROM syllabus_policies WHERE syllabus_id = ?').bind(syllabusId),
@@ -78,7 +68,6 @@ syllabusRoutes.post('/:courseId/syllabus', requireRole('professor'), async (c) =
     ).bind(syllabusId, courseId, text, 'pending').run();
   }
 
-  // Trigger the syllabus parse workflow
   const instance = await c.env.SYLLABUS_PARSE_WORKFLOW.create({
     params: { syllabusId, courseId, rawText: text },
   });
@@ -90,7 +79,6 @@ syllabusRoutes.post('/:courseId/syllabus', requireRole('professor'), async (c) =
   }, 202);
 });
 
-// Get parsed syllabus
 syllabusRoutes.get('/:courseId/syllabus', async (c) => {
   const courseId = c.req.param('courseId');
 
@@ -118,7 +106,6 @@ syllabusRoutes.get('/:courseId/syllabus', async (c) => {
   });
 });
 
-// Get syllabus parse status
 syllabusRoutes.get('/:courseId/syllabus/status', async (c) => {
   const courseId = c.req.param('courseId');
   const syllabus = await c.env.DB.prepare(
@@ -132,7 +119,6 @@ syllabusRoutes.get('/:courseId/syllabus/status', async (c) => {
   return c.json({ status: syllabus.status, parsed_at: syllabus.parsed_at });
 });
 
-// Get upcoming deadlines
 syllabusRoutes.get('/:courseId/deadlines', async (c) => {
   const courseId = c.req.param('courseId');
   const deadlines = await c.env.DB.prepare(

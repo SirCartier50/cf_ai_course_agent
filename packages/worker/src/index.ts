@@ -11,17 +11,14 @@ import { materialRoutes } from './routes/materials';
 
 const app = new Hono<{ Bindings: Env }>();
 
-// CORS
 app.use('*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Health check
 app.get('/', (c) => c.json({ status: 'ok', service: 'cf-ai-course-agent' }));
 
-// Routes
 app.route('/api/auth', authRoutes);
 app.route('/api/courses', courseRoutes);
 app.route('/api/courses', syllabusRoutes);
@@ -30,7 +27,6 @@ app.route('/api/courses', ticketRoutes);
 app.route('/api/courses', analyticsRoutes);
 app.route('/api/courses', materialRoutes);
 
-// Export workflows
 export { SyllabusParseWorkflow } from './workflows/syllabus-parse';
 export { QuestionTriageWorkflow } from './workflows/question-triage';
 

@@ -1,0 +1,88 @@
+Week 5: Lists and Strings
+
+LEARNING OBJECTIVES
+- Create and manipulate lists
+- Use list methods (append, insert, remove, sort, etc.)
+- Understand string operations and methods
+- Use list comprehensions
+- Slice lists and strings
+
+LISTS
+A list is an ordered, mutable collection of items.
+
+    fruits = ["apple", "banana", "cherry"]
+    numbers = [1, 2, 3, 4, 5]
+    mixed = [1, "hello", True, 3.14]
+
+COMMON LIST OPERATIONS
+
+    fruits.append("date")          # Add to end
+    fruits.insert(1, "blueberry")  # Insert at index
+    fruits.remove("banana")        # Remove by value
+    fruits.pop()                   # Remove & return last item
+    fruits.sort()                  # Sort in place
+    len(fruits)                    # Length
+
+INDEXING AND SLICING
+Lists are zero-indexed:
+
+    nums = [10, 20, 30, 40, 50]
+    nums[0]      # 10
+    nums[-1]     # 50
+    nums[1:3]    # [20, 30]
+    nums[:3]     # [10, 20, 30]
+    nums[2:]     # [30, 40, 50]
+
+LIST COMPREHENSIONS
+A concise way to create lists:
+
+    squares = [x**2 for x in range(10)]
+    # [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+
+    evens = [x for x in range(20) if x % 2 == 0]
+    # [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+
+STRINGS
+Strings are immutable sequences of characters.
+
+    name = "Alice"
+    name.upper()        # "ALICE"
+    name.lower()        # "alice"
+    name.replace("A", "a")  # "alice"
+    name.startswith("Al")   # True
+    "  hello  ".strip()     # "hello"
+
+STRING SPLITTING AND JOINING
+
+    sentence = "the quick brown fox"
+    words = sentence.split()    # ["the", "quick", "brown", "fox"]
+    "-".join(words)             # "the-quick-brown-fox"
+
+F-STRINGS (formatted strings)
+
+    name = "Alice"
+    age = 20
+    print(f"{name} is {age} years old")
+
+ITERATING OVER LISTS
+
+    for fruit in fruits:
+        print(fruit)
+
+    # With index:
+    for i, fruit in enumerate(fruits):
+        print(f"{i}: {fruit}")
+
+COMMON MISTAKES
+1. Modifying a list while iterating over it
+2. Confusing append (adds one item) with extend (adds multiple)
+3. Forgetting that strings are immutable — methods return new strings
+
+KEY DIFFERENCE: MUTABLE vs IMMUTABLE
+- Lists are mutable: you can change them after creation
+- Strings are immutable: every operation creates a new string
+
+PRACTICE PROBLEMS (try before Homework 4)
+1. Write a function that reverses a list without using .reverse()
+2. Write a function that finds the most common element in a list
+3. Write a function that checks if a string is a palindrome

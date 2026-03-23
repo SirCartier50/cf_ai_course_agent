@@ -6,7 +6,6 @@ export const materialRoutes = new Hono<{ Bindings: Env }>();
 
 materialRoutes.use('*', requireAuth());
 
-// Create a course material (professor or TA only)
 materialRoutes.post('/:courseId/materials', requireRole('professor', 'ta'), async (c) => {
   const courseId = c.req.param('courseId');
   const { title, type, content, week_number } = await c.req.json();
@@ -20,7 +19,6 @@ materialRoutes.post('/:courseId/materials', requireRole('professor', 'ta'), asyn
     return c.json({ error: `type must be one of: ${validTypes.join(', ')}` }, 400);
   }
 
-  // Verify course exists
   const course = await c.env.DB.prepare('SELECT id FROM courses WHERE id = ?').bind(courseId).first();
   if (!course) {
     return c.json({ error: 'Course not found' }, 404);
@@ -44,7 +42,6 @@ materialRoutes.post('/:courseId/materials', requireRole('professor', 'ta'), asyn
   }, 201);
 });
 
-// List all materials for a course (with optional type filter)
 materialRoutes.get('/:courseId/materials', async (c) => {
   const courseId = c.req.param('courseId');
   const typeFilter = c.req.query('type');
@@ -64,7 +61,6 @@ materialRoutes.get('/:courseId/materials', async (c) => {
   return c.json({ materials: materials.results });
 });
 
-// Get a single material
 materialRoutes.get('/:courseId/materials/:materialId', async (c) => {
   const courseId = c.req.param('courseId');
   const materialId = c.req.param('materialId');
@@ -80,7 +76,6 @@ materialRoutes.get('/:courseId/materials/:materialId', async (c) => {
   return c.json({ material });
 });
 
-// Delete a material (professor only)
 materialRoutes.delete('/:courseId/materials/:materialId', requireRole('professor'), async (c) => {
   const courseId = c.req.param('courseId');
   const materialId = c.req.param('materialId');
@@ -98,7 +93,6 @@ materialRoutes.delete('/:courseId/materials/:materialId', requireRole('professor
   return c.json({ deleted: true });
 });
 
-// Get announcements for a course (most recent first)
 materialRoutes.get('/:courseId/announcements', async (c) => {
   const courseId = c.req.param('courseId');
 

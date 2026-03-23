@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 
 export function CourseSetup() {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
   const [course, setCourse] = useState<any>(null);
   const [syllabusText, setSyllabusText] = useState('');
   const [syllabusStatus, setSyllabusStatus] = useState<string | null>(null);
@@ -11,7 +12,6 @@ export function CourseSetup() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
-  // Reveal key state
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [keyPassword, setKeyPassword] = useState('');
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
@@ -19,27 +19,25 @@ export function CourseSetup() {
   const [keyLoading, setKeyLoading] = useState(false);
   const keyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Roster state
   const [roster, setRoster] = useState<any[]>([]);
   const [showRoster, setShowRoster] = useState(false);
 
-  // Materials state
   const [materialTitle, setMaterialTitle] = useState('');
   const [materialType, setMaterialType] = useState('Lecture Notes');
   const [materialWeek, setMaterialWeek] = useState('');
-  const [materialContent, setMaterialContent] = useState('');
+  const [materialPreview, setMaterialPreview] = useState<string | null>(null);
+  const [materialFileName, setMaterialFileName] = useState('');
   const [materialUploading, setMaterialUploading] = useState(false);
   const [materialError, setMaterialError] = useState('');
   const [materials, setMaterials] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadMaterials = async () => {
     if (!courseId) return;
     try {
       const res = await api.getMaterials(courseId);
       setMaterials(res.materials);
-    } catch {
-      // ignore
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -56,7 +54,6 @@ export function CourseSetup() {
     loadMaterials();
   }, [courseId]);
 
-  // Poll for parsing status
   useEffect(() => {
     if (syllabusStatus !== 'parsing' || !courseId) return;
     const interval = setInterval(async () => {
@@ -73,7 +70,6 @@ export function CourseSetup() {
     return () => clearInterval(interval);
   }, [syllabusStatus, courseId]);
 
-  // Clean up key reveal timer
   useEffect(() => {
     return () => {
       if (keyTimerRef.current) clearTimeout(keyTimerRef.current);
@@ -104,7 +100,6 @@ export function CourseSetup() {
       const res = await api.revealCourseKey(courseId, keyPassword);
       setRevealedKey(res.course_key);
       setKeyPassword('');
-      // Auto-hide after 30 seconds
       keyTimerRef.current = setTimeout(() => {
         setRevealedKey(null);
         setShowKeyModal(false);
@@ -123,11 +118,57 @@ export function CourseSetup() {
     setShowRoster(true);
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMaterialFileName(file.name);
+
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+    if (!materialTitle) setMaterialTitle(nameWithoutExt);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      setMaterialPreview(text);
+    };
+    reader.readAsText(file);
+
+    if (e.target) e.target.value = '';
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!courseId || !materialTitle.trim() || !materialPreview) return;
+    setMaterialUploading(true);
+    setMaterialError('');
+    try {
+      await api.uploadMaterial(courseId, {
+        title: materialTitle,
+        type: materialType,
+        content: materialPreview,
+        week_number: materialWeek ? parseInt(materialWeek, 10) : undefined,
+      });
+      setMaterialTitle('');
+      setMaterialType('Lecture Notes');
+      setMaterialWeek('');
+      setMaterialPreview(null);
+      setMaterialFileName('');
+      await loadMaterials();
+    } catch (err: any) {
+      setMaterialError(err.message);
+    } finally {
+      setMaterialUploading(false);
+    }
+  };
+
   return (
     <div className="container">
-      <h2 style={{ marginBottom: 20 }}>{course?.code} - Course Setup</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <button className="btn btn-secondary" style={{ fontSize: 13, padding: '4px 10px' }} onClick={() => navigate(`/course/${courseId}`)}>
+          &larr; Back
+        </button>
+        <h2>{course?.code} - Course Setup</h2>
+      </div>
 
-      {/* Course Key Section */}
       <div className="card" style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -140,7 +181,6 @@ export function CourseSetup() {
         </div>
       </div>
 
-      {/* Student Roster */}
       <div className="card" style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showRoster ? 12 : 0 }}>
           <div>
@@ -185,7 +225,6 @@ export function CourseSetup() {
         )}
       </div>
 
-      {/* Syllabus Upload */}
       <div className="card" style={{ marginBottom: 20 }}>
         <h3 style={{ marginBottom: 12 }}>Syllabus</h3>
 
@@ -263,87 +302,66 @@ export function CourseSetup() {
         )}
       </div>
 
-      {/* Course Materials Upload */}
       <div className="card" style={{ marginBottom: 20 }}>
         <h3 style={{ marginBottom: 12 }}>Course Materials</h3>
-        <form onSubmit={async (e) => {
-          e.preventDefault();
-          if (!courseId || !materialTitle.trim() || !materialContent.trim()) return;
-          setMaterialUploading(true);
-          setMaterialError('');
-          try {
-            await api.uploadMaterial(courseId, {
-              title: materialTitle,
-              type: materialType,
-              content: materialContent,
-              week_number: materialWeek ? parseInt(materialWeek, 10) : undefined,
-            });
-            setMaterialTitle('');
-            setMaterialType('Lecture Notes');
-            setMaterialWeek('');
-            setMaterialContent('');
-            await loadMaterials();
-          } catch (err: any) {
-            setMaterialError(err.message);
-          } finally {
-            setMaterialUploading(false);
-          }
-        }}>
-          <div style={{ marginBottom: 12 }}>
+        <p style={{ fontSize: 13, color: '#666', marginBottom: 16 }}>
+          Upload lecture notes, slides, resources, or announcements. Supports .txt and .md files.
+        </p>
+
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          <div style={{ flex: 2 }}>
             <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>Title</label>
             <input
               value={materialTitle}
               onChange={(e) => setMaterialTitle(e.target.value)}
               placeholder="e.g. Week 3 Lecture Notes"
-              required
             />
           </div>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>Type</label>
-              <select
-                value={materialType}
-                onChange={(e) => setMaterialType(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 6, fontSize: 14 }}
-              >
-                <option value="Lecture Notes">Lecture Notes</option>
-                <option value="Slides">Slides</option>
-                <option value="Resource">Resource</option>
-                <option value="Announcement">Announcement</option>
-              </select>
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>Week Number (optional)</label>
-              <input
-                type="number"
-                value={materialWeek}
-                onChange={(e) => setMaterialWeek(e.target.value)}
-                placeholder="e.g. 3"
-                min={1}
-              />
-            </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>Type</label>
+            <select
+              value={materialType}
+              onChange={(e) => setMaterialType(e.target.value)}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 6, fontSize: 14 }}
+            >
+              <option value="Lecture Notes">Lecture Notes</option>
+              <option value="Slides">Slides</option>
+              <option value="Resource">Resource</option>
+              <option value="Announcement">Announcement</option>
+            </select>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>Content</label>
-            <textarea
-              value={materialContent}
-              onChange={(e) => setMaterialContent(e.target.value)}
-              placeholder="Paste or type the material content here..."
-              rows={8}
-              style={{ fontFamily: 'monospace', fontSize: 13 }}
-              required
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>Week (optional)</label>
+            <input
+              type="number"
+              value={materialWeek}
+              onChange={(e) => setMaterialWeek(e.target.value)}
+              placeholder="e.g. 3"
+              min={1}
             />
           </div>
-          {materialError && <p style={{ color: '#e74c3c', fontSize: 13, marginBottom: 8 }}>{materialError}</p>}
-          <button type="submit" className="btn btn-primary" disabled={materialUploading || !materialTitle.trim() || !materialContent.trim()}>
-            {materialUploading ? 'Uploading...' : 'Upload Material'}
-          </button>
-        </form>
+        </div>
 
-        {/* Existing Materials List */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".txt,.md,.text"
+          style={{ display: 'none' }}
+          onChange={handleFileSelect}
+        />
+        <button
+          className="btn btn-primary"
+          onClick={() => fileInputRef.current?.click()}
+          style={{ padding: '10px 24px' }}
+        >
+          Choose File to Upload
+        </button>
+
+        {materialError && <p style={{ color: '#e74c3c', fontSize: 13, marginTop: 8 }}>{materialError}</p>}
+
         {materials.length > 0 && (
           <div style={{ marginTop: 20 }}>
-            <h4 style={{ fontSize: 14, marginBottom: 8 }}>Existing Materials</h4>
+            <h4 style={{ fontSize: 14, marginBottom: 8 }}>Uploaded Materials</h4>
             {materials.map((m: any) => (
               <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, background: '#f9f9f9', borderRadius: 6, marginBottom: 8 }}>
                 <div>
@@ -374,7 +392,45 @@ export function CourseSetup() {
         )}
       </div>
 
-      {/* Reveal Key Modal */}
+      {materialPreview && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+        }} onClick={() => { setMaterialPreview(null); setMaterialFileName(''); }}>
+          <div className="card" style={{ width: 600, maxHeight: '80vh', padding: 28, display: 'flex', flexDirection: 'column' }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginBottom: 4 }}>Preview: {materialFileName}</h3>
+            <p style={{ fontSize: 12, color: '#666', marginBottom: 12 }}>
+              Title: <strong>{materialTitle || materialFileName}</strong> | Type: <strong>{materialType}</strong>
+              {materialWeek && <> | Week: <strong>{materialWeek}</strong></>}
+            </p>
+            <div style={{
+              flex: 1, overflow: 'auto', background: '#f9f9f9', borderRadius: 6,
+              padding: 16, fontSize: 13, fontFamily: 'monospace', whiteSpace: 'pre-wrap',
+              maxHeight: '50vh', marginBottom: 16, border: '1px solid #eee',
+            }}>
+              {materialPreview}
+            </div>
+            {materialError && <p style={{ color: '#e74c3c', fontSize: 13, marginBottom: 8 }}>{materialError}</p>}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="btn btn-primary"
+                style={{ flex: 1 }}
+                disabled={materialUploading || !materialTitle.trim()}
+                onClick={handleConfirmUpload}
+              >
+                {materialUploading ? 'Uploading...' : 'Confirm Upload'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => { setMaterialPreview(null); setMaterialFileName(''); }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showKeyModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,

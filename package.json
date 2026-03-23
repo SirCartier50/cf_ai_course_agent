@@ -2,9 +2,7 @@
   "name": "cf_ai_course_agent",
   "private": true,
   "workspaces": [
-    "packages/shared",
     "packages/worker",
-    "packages/workflows",
     "packages/web"
   ],
   "scripts": {

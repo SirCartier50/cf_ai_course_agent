@@ -24,7 +24,6 @@ export function StudentDashboard() {
     try {
       const res = await api.enrollInCourse(courseKey.trim(), studentId.trim());
       setEnrollSuccess(res.course);
-      // Refresh courses
       const coursesRes = await api.listCourses();
       setCourses(coursesRes.courses);
     } catch (err: any) {
@@ -51,7 +50,6 @@ export function StudentDashboard() {
         </button>
       </div>
 
-      {/* Course grid */}
       {courses.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: 40 }}>
           <p style={{ color: '#666', marginBottom: 8 }}>No courses yet.</p>
@@ -74,7 +72,6 @@ export function StudentDashboard() {
         </div>
       )}
 
-      {/* Enroll Modal */}
       {showEnrollModal && !enrollSuccess && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -122,7 +119,6 @@ export function StudentDashboard() {
         </div>
       )}
 
-      {/* Success Modal */}
       {enrollSuccess && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,

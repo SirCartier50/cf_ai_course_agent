@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 function getToken(): string | null {
   return localStorage.getItem('token');
@@ -33,7 +33,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// Auth
 export const api = {
   register: (data: { email: string; name: string; password: string; role: string }) =>
     request<{ token: string; user: any }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
@@ -49,7 +48,6 @@ export const api = {
   resetPassword: (token: string, new_password: string) =>
     request<{ message: string }>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, new_password }) }),
 
-  // Courses
   createCourse: (data: { code: string; title: string; term: string; student_emails: string[]; agent_rules?: string; agent_persona?: string }) =>
     request<{ course: any; student_roster: any[] }>('/courses', { method: 'POST', body: JSON.stringify(data) }),
 
@@ -69,7 +67,6 @@ export const api = {
       method: 'POST', body: JSON.stringify({ course_key: courseKey, student_course_id: studentCourseId }),
     }),
 
-  // Syllabus
   uploadSyllabus: (courseId: string, text: string) =>
     request<{ syllabus_id: string; status: string }>(`/courses/${courseId}/syllabus`, {
       method: 'POST', body: JSON.stringify({ text }),
@@ -93,7 +90,6 @@ export const api = {
   deleteMaterial: (courseId: string, materialId: string) =>
     request<{ deleted: boolean }>(`/courses/${courseId}/materials/${materialId}`, { method: 'DELETE' }),
 
-  // Chat
   sendMessage: (courseId: string, message: string, conversationId?: string) =>
     request<{ conversation_id: string; message: any }>(`/courses/${courseId}/chat`, {
       method: 'POST', body: JSON.stringify({ message, conversation_id: conversationId }),
@@ -102,7 +98,6 @@ export const api = {
   getChatHistory: (courseId: string, conversationId?: string) =>
     request<any>(`/courses/${courseId}/chat/history${conversationId ? `?conversation_id=${conversationId}` : ''}`),
 
-  // Tickets
   listTickets: (courseId: string, status?: string) =>
     request<{ tickets: any[] }>(`/courses/${courseId}/tickets${status ? `?status=${status}` : ''}`),
 
@@ -114,7 +109,6 @@ export const api = {
       method: 'PATCH', body: JSON.stringify(data),
     }),
 
-  // Analytics
   getOverview: (courseId: string) => request<any>(`/courses/${courseId}/analytics/overview`),
 
   getAtRisk: (courseId: string) => request<{ students: any[] }>(`/courses/${courseId}/analytics/at-risk`),

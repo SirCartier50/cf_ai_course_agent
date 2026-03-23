@@ -7,7 +7,6 @@ export const chatRoutes = new Hono<{ Bindings: Env }>();
 
 chatRoutes.use('*', requireAuth());
 
-// Send a message (students only)
 chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
   const courseId = c.req.param('courseId');
   const userId = c.get('userId');
@@ -17,7 +16,6 @@ chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
     return c.json({ error: 'message is required' }, 400);
   }
 
-  // Verify enrollment
   const enrolled = await c.env.DB.prepare(
     'SELECT id FROM course_students WHERE course_id = ? AND user_id = ? AND enrolled = 1'
   ).bind(courseId, userId).first();
@@ -26,7 +24,6 @@ chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
     return c.json({ error: 'Not enrolled in this course' }, 403);
   }
 
-  // Get or create conversation
   let convId = conversation_id;
   if (!convId) {
     convId = crypto.randomUUID();
@@ -35,18 +32,15 @@ chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
     ).bind(convId, courseId, userId).run();
   }
 
-  // Save user message
   const userMsgId = crypto.randomUUID();
   await c.env.DB.prepare(
     'INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)'
   ).bind(userMsgId, convId, 'user', message).run();
 
-  // Update conversation timestamp
   await c.env.DB.prepare(
     'UPDATE conversations SET last_message_at = datetime(\'now\') WHERE id = ?'
   ).bind(convId).run();
 
-  // Run the AI agent
   let agentResponse;
   try {
     agentResponse = await runAgent({
@@ -57,7 +51,7 @@ chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
       userMessage: message,
     });
   } catch (err: any) {
-    console.error('Agent error:', err);
+    console.error('Agent error:', err?.message || err);
     agentResponse = {
       content: "I'm sorry, I encountered an error processing your question. Please try again in a moment.",
       toolCalls: undefined,
@@ -65,7 +59,6 @@ chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
     };
   }
 
-  // Save assistant message
   const assistantMsgId = crypto.randomUUID();
   await c.env.DB.prepare(
     'INSERT INTO messages (id, conversation_id, role, content, tool_calls, metadata) VALUES (?, ?, ?, ?, ?, ?)'
@@ -78,7 +71,6 @@ chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
     agentResponse.metadata ? JSON.stringify(agentResponse.metadata) : null,
   ).run();
 
-  // Log analytics
   await c.env.DB.prepare(
     'INSERT INTO analytics_events (id, course_id, event_type, user_id, metadata) VALUES (?, ?, ?, ?, ?)'
   ).bind(
@@ -89,7 +81,6 @@ chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
     JSON.stringify({ confidence: agentResponse.metadata?.confidence }),
   ).run();
 
-  // Update student profile
   await c.env.DB.prepare(
     `UPDATE student_profiles
      SET question_count = question_count + 1, last_active = datetime('now')
@@ -108,14 +99,12 @@ chatRoutes.post('/:courseId/chat', requireRole('student'), async (c) => {
   });
 });
 
-// Get conversation history
 chatRoutes.get('/:courseId/chat/history', async (c) => {
   const courseId = c.req.param('courseId');
   const userId = c.get('userId');
   const conversationId = c.req.query('conversation_id');
 
   if (!conversationId) {
-    // Return list of conversations
     const conversations = await c.env.DB.prepare(
       'SELECT * FROM conversations WHERE course_id = ? AND user_id = ? ORDER BY last_message_at DESC'
     ).bind(courseId, userId).all();
@@ -123,7 +112,6 @@ chatRoutes.get('/:courseId/chat/history', async (c) => {
     return c.json({ conversations: conversations.results });
   }
 
-  // Return messages for a specific conversation
   const messages = await c.env.DB.prepare(
     'SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC'
   ).bind(conversationId).all();

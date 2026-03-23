@@ -8,10 +8,9 @@ interface JwtPayload {
   exp: number;
 }
 
-// Simple JWT using Web Crypto API (available in Workers)
 export async function signJwt(payload: Omit<JwtPayload, 'exp'>, secret: string): Promise<string> {
   const header = { alg: 'HS256', typ: 'JWT' };
-  const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 24 hours
+  const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
   const fullPayload = { ...payload, exp };
 
   const encoder = new TextEncoder();
@@ -61,7 +60,6 @@ export async function verifyJwt(token: string, secret: string): Promise<JwtPaylo
   }
 }
 
-// Simple password hashing using SHA-256 + salt
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -81,7 +79,6 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return hashHex === storedHash;
 }
 
-// Middleware to require authentication
 export function requireAuth() {
   return async (c: Context<{ Bindings: Env }>, next: Next) => {
     const authHeader = c.req.header('Authorization');
@@ -102,7 +99,6 @@ export function requireAuth() {
   };
 }
 
-// Middleware to require specific roles
 export function requireRole(...roles: string[]) {
   return async (c: Context<{ Bindings: Env }>, next: Next) => {
     const role = c.get('userRole');

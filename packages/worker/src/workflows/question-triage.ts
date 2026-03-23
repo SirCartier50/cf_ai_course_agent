@@ -13,7 +13,6 @@ export class QuestionTriageWorkflow extends WorkflowEntrypoint<Env, QuestionTria
   async run(event: WorkflowEvent<QuestionTriageParams>, step: WorkflowStep) {
     const { courseId, userId, conversationId, userMessage } = event.payload;
 
-    // Step 1: Classify intent
     const intent = await step.do('classify-intent', async () => {
       const response = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast' as any, {
         messages: [
@@ -39,11 +38,9 @@ Return ONLY the category name, nothing else.`,
       return ((response as any).response || 'other').trim().toLowerCase();
     });
 
-    // Step 2: Determine action based on intent
     const shouldEscalate = ['makeup_request', 'grade_dispute', 'accommodation'].includes(intent);
 
     if (shouldEscalate) {
-      // Step 3a: Create ticket
       await step.do('create-ticket', async () => {
         const ticketId = crypto.randomUUID();
         await this.env.DB.prepare(
@@ -54,7 +51,6 @@ Return ONLY the category name, nothing else.`,
       });
     }
 
-    // Step 4: Log analytics
     await step.do('log-analytics', async () => {
       await this.env.DB.prepare(
         'INSERT INTO analytics_events (id, course_id, event_type, user_id, metadata) VALUES (?, ?, ?, ?, ?)'

@@ -7,7 +7,6 @@ export const analyticsRoutes = new Hono<{ Bindings: Env }>();
 analyticsRoutes.use('*', requireAuth());
 analyticsRoutes.use('*', requireRole('professor', 'ta'));
 
-// Course overview stats
 analyticsRoutes.get('/:courseId/analytics/overview', async (c) => {
   const courseId = c.req.param('courseId');
 
@@ -45,7 +44,6 @@ analyticsRoutes.get('/:courseId/analytics/overview', async (c) => {
   });
 });
 
-// At-risk students
 analyticsRoutes.get('/:courseId/analytics/at-risk', async (c) => {
   const courseId = c.req.param('courseId');
 
@@ -60,11 +58,9 @@ analyticsRoutes.get('/:courseId/analytics/at-risk', async (c) => {
   return c.json({ students: students.results });
 });
 
-// Trending questions (recent questions grouped by similarity)
 analyticsRoutes.get('/:courseId/analytics/trending', async (c) => {
   const courseId = c.req.param('courseId');
 
-  // Get recent questions from messages
   const recent = await c.env.DB.prepare(
     `SELECT m.content, m.created_at
      FROM messages m

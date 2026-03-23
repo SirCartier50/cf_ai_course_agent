@@ -1,0 +1,60 @@
+CS 101 - Introduction to Computer Science
+Fall 2025 | Professor Sarah Chen
+Office: Engineering Hall 312
+Email: schen@university.edu
+
+COURSE DESCRIPTION
+This course provides a broad introduction to computer science fundamentals including programming, algorithms, data structures, and computational thinking. No prior programming experience required.
+
+MEETING TIMES
+Lecture: Mon/Wed 10:00 AM - 11:15 AM, Room ENGR 200
+Lab: Friday 2:00 PM - 3:50 PM, Room ENGR 105
+
+OFFICE HOURS
+Professor Chen: Tuesday 2:00 PM - 4:00 PM, Engineering Hall 312
+TA - Alex Rivera: Monday 4:00 PM - 6:00 PM, Engineering Hall 120 (or Zoom)
+TA - Priya Patel: Thursday 1:00 PM - 3:00 PM, Virtual (Zoom link on Canvas)
+
+GRADING BREAKDOWN
+Homework Assignments (8 total): 30%
+Midterm Exam: 20%
+Final Project: 25%
+Final Exam: 20%
+Participation & Lab Attendance: 5%
+
+Note: The lowest homework score will be dropped.
+
+IMPORTANT DATES & DEADLINES
+- Homework 1: Variables & Data Types — Due September 15, 2025
+- Homework 2: Control Flow — Due September 29, 2025
+- Homework 3: Functions — Due October 13, 2025
+- Midterm Exam — October 22, 2025 (in class)
+- Homework 4: Lists & Strings — Due November 3, 2025
+- Homework 5: File I/O — Due November 10, 2025
+- Homework 6: Dictionaries — Due November 17, 2025
+- Final Project Proposal — Due November 5, 2025
+- Homework 7: Classes & OOP — Due November 24, 2025
+- Final Project Due — December 5, 2025
+- Homework 8: Algorithms — Due December 8, 2025
+- Final Exam — December 15, 2025, 10:00 AM - 12:00 PM
+
+LATE WORK POLICY
+Assignments submitted late will lose 10% per day, up to a maximum of 3 days late. After 3 days, the assignment receives a zero. Each student is granted ONE free 3-day extension per semester, no questions asked — email the professor before the deadline to use it.
+
+ATTENDANCE POLICY
+Lecture attendance is not mandatory but strongly encouraged. Lab attendance is mandatory and counts toward the participation grade. Missing more than 2 labs without a valid excuse will result in a zero for the participation component. If you must miss a lab, email the professor at least 24 hours in advance.
+
+ACADEMIC INTEGRITY
+All submitted work must be your own. You may discuss concepts with classmates, but sharing code or copying solutions is strictly prohibited. First offense: zero on the assignment and a written warning. Second offense: F in the course and referral to the Dean of Students. Using AI tools (ChatGPT, Copilot, etc.) is allowed for learning and debugging, but you must write the final submitted code yourself. Copy-pasting AI-generated solutions is considered a violation.
+
+MAKEUP EXAM POLICY
+Makeup exams are only given for documented medical emergencies or university-approved absences. You must notify the professor at least 48 hours before the exam, or within 24 hours after in case of emergency. Documentation is required in all cases.
+
+EXTRA CREDIT
+There is no extra credit offered in this course. Focus on completing all assignments and doing well on exams.
+
+ACCOMMODATIONS
+Students with documented disabilities should contact the Disability Resource Center (DRC) and provide their accommodation letter to the professor within the first two weeks of class. The professor will work with the DRC to ensure appropriate accommodations are made.
+
+TUTORING RESOURCES
+Free tutoring is available at the Learning Support Center (Library, Room 201), Monday-Thursday 10 AM - 6 PM. Drop-in Python tutoring is available Wednesday evenings 6-8 PM in ENGR 105.

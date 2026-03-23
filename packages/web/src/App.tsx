@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { api, setToken, clearToken } from './api/client';
 import { LoginPage } from './pages/LoginPage';
@@ -6,6 +6,7 @@ import { StudentDashboard } from './pages/student/Dashboard';
 import { StudentChat } from './pages/student/Chat';
 import { CourseDashboard } from './pages/student/CourseDashboard';
 import { ProfessorDashboard } from './pages/professor/Dashboard';
+import { ProfessorCourseDashboard } from './pages/professor/CourseDashboard';
 import { ProfessorTickets } from './pages/professor/Tickets';
 import { CourseSetup } from './pages/professor/CourseSetup';
 
@@ -48,7 +49,9 @@ export function App() {
   return (
     <BrowserRouter>
       <nav style={{ background: '#1a1a2e', color: 'white', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontWeight: 700, fontSize: 18 }}>Course Agent</div>
+        <Link to="/" style={{ fontWeight: 700, fontSize: 18, color: 'white', textDecoration: 'none', cursor: 'pointer' }}>
+          Course Agent
+        </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <span>{user.name} ({user.role})</span>
           <button className="btn btn-secondary" onClick={handleLogout} style={{ fontSize: 12 }}>Logout</button>
@@ -66,6 +69,7 @@ export function App() {
           ) : (
             <>
               <Route path="/" element={<ProfessorDashboard />} />
+              <Route path="/course/:courseId" element={<ProfessorCourseDashboard />} />
               <Route path="/course/:courseId/setup" element={<CourseSetup />} />
               <Route path="/course/:courseId/tickets" element={<ProfessorTickets />} />
               <Route path="*" element={<Navigate to="/" />} />

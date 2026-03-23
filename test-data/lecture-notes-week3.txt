@@ -1,0 +1,76 @@
+Week 3: Functions in Python
+
+LEARNING OBJECTIVES
+- Understand what functions are and why we use them
+- Define functions with parameters and return values
+- Understand scope (local vs global variables)
+- Use default parameters and keyword arguments
+
+WHAT IS A FUNCTION?
+A function is a reusable block of code that performs a specific task. Instead of writing the same code over and over, you define it once and call it whenever needed.
+
+Think of it like a recipe: you write the instructions once, and you can follow them any time you want to make that dish.
+
+DEFINING A FUNCTION
+Use the `def` keyword:
+
+    def greet(name):
+        return f"Hello, {name}!"
+
+    result = greet("Alice")
+    print(result)  # Output: Hello, Alice!
+
+Key parts:
+- `def` starts the definition
+- `greet` is the function name
+- `name` is a parameter (input)
+- `return` sends a value back to the caller
+
+PARAMETERS vs ARGUMENTS
+- Parameters are the variables listed in the function definition
+- Arguments are the actual values passed when you call the function
+
+    def add(a, b):     # a and b are parameters
+        return a + b
+
+    add(3, 5)           # 3 and 5 are arguments
+
+DEFAULT PARAMETERS
+You can give parameters default values:
+
+    def greet(name, greeting="Hello"):
+        return f"{greeting}, {name}!"
+
+    greet("Alice")              # "Hello, Alice!"
+    greet("Alice", "Hey")       # "Hey, Alice!"
+
+SCOPE
+Variables created inside a function are LOCAL — they only exist inside that function.
+
+    def my_function():
+        x = 10          # local variable
+        print(x)
+
+    my_function()        # prints 10
+    print(x)             # ERROR! x doesn't exist here
+
+Global variables are defined outside functions and can be read (but not modified without the `global` keyword) inside functions.
+
+MULTIPLE RETURN VALUES
+Python functions can return multiple values using tuples:
+
+    def min_max(numbers):
+        return min(numbers), max(numbers)
+
+    lo, hi = min_max([3, 1, 4, 1, 5])
+    print(lo, hi)  # 1 5
+
+COMMON MISTAKES
+1. Forgetting the return statement (function returns None)
+2. Modifying a global variable without using `global`
+3. Mutable default arguments (never use a list as a default parameter)
+
+PRACTICE PROBLEMS (try these before Homework 3)
+1. Write a function `is_even(n)` that returns True if n is even
+2. Write a function `factorial(n)` that computes n! recursively
+3. Write a function `count_vowels(text)` that returns the number of vowels in a string

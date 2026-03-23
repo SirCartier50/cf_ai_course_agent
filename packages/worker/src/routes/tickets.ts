@@ -6,7 +6,6 @@ export const ticketRoutes = new Hono<{ Bindings: Env }>();
 
 ticketRoutes.use('*', requireAuth());
 
-// List tickets for a course (professor/ta only)
 ticketRoutes.get('/:courseId/tickets', requireRole('professor', 'ta'), async (c) => {
   const courseId = c.req.param('courseId');
   const status = c.req.query('status');
@@ -30,7 +29,6 @@ ticketRoutes.get('/:courseId/tickets', requireRole('professor', 'ta'), async (c)
   return c.json({ tickets: tickets.results });
 });
 
-// Get single ticket
 ticketRoutes.get('/:courseId/tickets/:ticketId', async (c) => {
   const ticketId = c.req.param('ticketId');
 
@@ -45,7 +43,6 @@ ticketRoutes.get('/:courseId/tickets/:ticketId', async (c) => {
     return c.json({ error: 'Ticket not found' }, 404);
   }
 
-  // Get conversation context if available
   let messages = null;
   if (ticket.conversation_id) {
     const result = await c.env.DB.prepare(
@@ -57,7 +54,6 @@ ticketRoutes.get('/:courseId/tickets/:ticketId', async (c) => {
   return c.json({ ticket, messages });
 });
 
-// Respond to ticket (professor/ta)
 ticketRoutes.patch('/:courseId/tickets/:ticketId', requireRole('professor', 'ta'), async (c) => {
   const ticketId = c.req.param('ticketId');
   const userId = c.get('userId');
@@ -95,7 +91,6 @@ ticketRoutes.patch('/:courseId/tickets/:ticketId', requireRole('professor', 'ta'
     `UPDATE tickets SET ${updates.join(', ')} WHERE id = ?`
   ).bind(...values).run();
 
-  // Absorb into knowledge base if requested
   if (absorb_to_knowledge_base && professor_response) {
     const kbId = crypto.randomUUID();
     await c.env.DB.prepare(
@@ -103,7 +98,6 @@ ticketRoutes.patch('/:courseId/tickets/:ticketId', requireRole('professor', 'ta'
     ).bind(kbId, ticket.course_id, ticket.description, professor_response, 'ticket_resolution', ticketId, 1).run();
   }
 
-  // Log analytics
   if (status === 'resolved') {
     await c.env.DB.prepare(
       'INSERT INTO analytics_events (id, course_id, event_type, user_id) VALUES (?, ?, ?, ?)'

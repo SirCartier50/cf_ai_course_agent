@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 
 function containsInappropriate(text: string): boolean {
@@ -10,6 +10,7 @@ function containsInappropriate(text: string): boolean {
 
 export function ProfessorTickets() {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState<any[]>([]);
   const [filter, setFilter] = useState('open');
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -64,9 +65,13 @@ export function ProfessorTickets() {
 
   return (
     <div className="container">
-      <h2 style={{ marginBottom: 20 }}>Tickets</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <button className="btn btn-secondary" style={{ fontSize: 13, padding: '4px 10px' }} onClick={() => navigate(`/course/${courseId}`)}>
+          &larr; Back
+        </button>
+        <h2>Tickets</h2>
+      </div>
 
-      {/* Filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         {['open', 'in_progress', 'resolved', 'denied', 'all'].map((f) => (
           <button
@@ -80,7 +85,6 @@ export function ProfessorTickets() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: selectedTicket ? '1fr 1fr' : '1fr', gap: 20 }}>
-        {/* Ticket list */}
         <div>
           {tickets.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: 24, color: '#666' }}>
@@ -139,7 +143,6 @@ export function ProfessorTickets() {
           )}
         </div>
 
-        {/* Ticket detail */}
         {selectedTicket && (
           <div className="card" style={{ position: 'sticky', top: 20, alignSelf: 'start' }}>
             <h3 style={{ marginBottom: 4 }}>{selectedTicket.subject}</h3>

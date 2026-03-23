@@ -39,7 +39,6 @@ export function StudentChat() {
     setInput('');
     setLoading(true);
 
-    // Optimistically add user message
     const tempId = 'temp-' + Date.now();
     setMessages((prev) => [...prev, { id: tempId, role: 'user', content: userMessage, created_at: new Date().toISOString() }]);
 
@@ -47,7 +46,6 @@ export function StudentChat() {
       const res = await api.sendMessage(courseId, userMessage, conversationId);
       setConversationId(res.conversation_id);
 
-      // Add assistant response
       setMessages((prev) => [...prev, {
         id: res.message.id,
         role: 'assistant',
@@ -84,13 +82,12 @@ export function StudentChat() {
 
   return (
     <div style={{ height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
       <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee', background: 'white' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             className="btn btn-secondary"
             style={{ fontSize: 13, padding: '4px 10px' }}
-            onClick={() => navigate('/')}
+            onClick={() => navigate(`/course/${courseId}`)}
           >
             &larr; Back
           </button>
@@ -101,7 +98,6 @@ export function StudentChat() {
         </div>
       </div>
 
-      {/* Messages */}
       <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', color: '#999', marginTop: 60 }}>
@@ -163,7 +159,6 @@ export function StudentChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <form onSubmit={handleSend} style={{ padding: '12px 20px', borderTop: '1px solid #eee', background: 'white', display: 'flex', gap: 8 }}>
         <input
           value={input}

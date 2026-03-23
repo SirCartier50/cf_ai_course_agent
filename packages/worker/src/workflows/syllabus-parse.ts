@@ -12,14 +12,12 @@ export class SyllabusParseWorkflow extends WorkflowEntrypoint<Env, SyllabusParse
   async run(event: WorkflowEvent<SyllabusParseParams>, step: WorkflowStep) {
     const { syllabusId, courseId, rawText } = event.payload;
 
-    // Step 1: Update status to parsing
     await step.do('update-status-parsing', async () => {
       await this.env.DB.prepare(
         "UPDATE syllabi SET status = 'parsing' WHERE id = ?"
       ).bind(syllabusId).run();
     });
 
-    // Step 2: Extract deadlines
     const deadlines = await step.do('extract-deadlines', async () => {
       const response = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast' as any, {
         messages: [
@@ -43,7 +41,6 @@ Return ONLY valid JSON, no other text.`,
       }
     });
 
-    // Step 3: Extract grading weights
     const gradingWeights = await step.do('extract-grading-weights', async () => {
       const response = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast' as any, {
         messages: [
@@ -66,7 +63,6 @@ Return ONLY valid JSON, no other text.`,
       }
     });
 
-    // Step 4: Extract policies
     const policies = await step.do('extract-policies', async () => {
       const response = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast' as any, {
         messages: [
@@ -90,7 +86,6 @@ Return ONLY valid JSON, no other text.`,
       }
     });
 
-    // Step 5: Extract office hours
     const officeHours = await step.do('extract-office-hours', async () => {
       const response = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast' as any, {
         messages: [
@@ -113,7 +108,6 @@ Use 24-hour time format. Return ONLY valid JSON, no other text.`,
       }
     });
 
-    // Step 6: Persist all parsed data to D1
     await step.do('persist-to-d1', async () => {
       const stmts = [];
 
@@ -154,7 +148,6 @@ Use 24-hour time format. Return ONLY valid JSON, no other text.`,
       }
     });
 
-    // Step 7: Cache key data in KV
     await step.do('populate-kv-cache', async () => {
       await Promise.all([
         this.env.KV.put(`course:${courseId}:deadlines`, JSON.stringify(deadlines)),
@@ -164,7 +157,6 @@ Use 24-hour time format. Return ONLY valid JSON, no other text.`,
       ]);
     });
 
-    // Step 8: Generate initial knowledge base entries from syllabus
     await step.do('seed-knowledge-base', async () => {
       const entries = [];
       for (const p of policies) {
@@ -189,7 +181,6 @@ Use 24-hour time format. Return ONLY valid JSON, no other text.`,
       }
     });
 
-    // Step 9: Update status to parsed
     await step.do('finalize', async () => {
       await this.env.DB.prepare(
         "UPDATE syllabi SET status = 'parsed', parsed_at = datetime('now') WHERE id = ?"

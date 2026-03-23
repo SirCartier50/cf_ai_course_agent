@@ -5,7 +5,6 @@ import { sendEmail } from '../services/email';
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
 
-// Register
 authRoutes.post('/register', async (c) => {
   const { email, name, password, role } = await c.req.json();
 
@@ -34,7 +33,6 @@ authRoutes.post('/register', async (c) => {
   return c.json({ token, user: { id, email, name, role } }, 201);
 });
 
-// Login
 authRoutes.post('/login', async (c) => {
   const { email, password } = await c.req.json();
 
@@ -55,7 +53,6 @@ authRoutes.post('/login', async (c) => {
   return c.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
 });
 
-// Forgot Password
 authRoutes.post('/forgot-password', async (c) => {
   const { email } = await c.req.json();
 
@@ -63,7 +60,6 @@ authRoutes.post('/forgot-password', async (c) => {
     return c.json({ error: 'email is required' }, 400);
   }
 
-  // Always return success to avoid revealing whether the email exists
   const user = await c.env.DB.prepare(
     'SELECT id, email FROM users WHERE email = ?'
   ).bind(email).first<{ id: string; email: string }>();
@@ -71,14 +67,12 @@ authRoutes.post('/forgot-password', async (c) => {
   if (user) {
     const id = crypto.randomUUID();
     const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     await c.env.DB.prepare(
       'INSERT INTO password_reset_tokens (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)'
     ).bind(id, user.id, token, expiresAt).run();
 
-    // Try to send email; if Resend key is configured, send via email
-    // Otherwise return the token directly (dev mode)
     const resetLink = `/reset-password?token=${token}`;
 
     if (c.env.RESEND_API_KEY && !c.env.RESEND_API_KEY.includes('placeholder')) {
@@ -94,18 +88,15 @@ authRoutes.post('/forgot-password', async (c) => {
            <p>If you did not request this, please ignore this email.</p>`
         );
       } catch {
-        // Log error but don't reveal it to the user
       }
     }
 
-    // In dev mode, return the token so the user can reset without email
     return c.json({ message: 'If an account with that email exists, a reset link has been sent.', reset_token: token });
   }
 
   return c.json({ message: 'If an account with that email exists, a reset link has been sent.' });
 });
 
-// Reset Password
 authRoutes.post('/reset-password', async (c) => {
   const { token, new_password } = await c.req.json();
 
@@ -143,7 +134,6 @@ authRoutes.post('/reset-password', async (c) => {
   return c.json({ message: 'Password has been reset successfully.' });
 });
 
-// Get current user
 authRoutes.get('/me', requireAuth(), async (c) => {
   const userId = c.get('userId');
   const user = await c.env.DB.prepare(

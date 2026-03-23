@@ -57,7 +57,6 @@ export function ProfessorDashboard() {
         </button>
       </div>
 
-      {/* Created course result — shows key + student IDs */}
       {createdCourse && (
         <div className="card" style={{ marginBottom: 20, border: '2px solid #2ecc71' }}>
           <h3 style={{ color: '#2ecc71', marginBottom: 12 }}>Course Created!</h3>
@@ -101,7 +100,6 @@ export function ProfessorDashboard() {
         </div>
       )}
 
-      {/* Create course form */}
       {showCreate && !createdCourse && (
         <div className="card" style={{ marginBottom: 20 }}>
           <h3 style={{ marginBottom: 16 }}>Create New Course</h3>
@@ -166,7 +164,6 @@ export function ProfessorDashboard() {
         </div>
       )}
 
-      {/* Course list */}
       {courses.length === 0 && !showCreate ? (
         <div className="card" style={{ textAlign: 'center', padding: 40 }}>
           <p style={{ color: '#666' }}>No courses yet. Create one to get started.</p>
@@ -174,14 +171,15 @@ export function ProfessorDashboard() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {courses.map((course) => (
-            <div key={course.id} className="card">
+            <div
+              key={course.id}
+              className="card"
+              style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }}
+              onClick={() => navigate(`/course/${course.id}`)}
+            >
               <h3 style={{ marginBottom: 4 }}>{course.code}</h3>
               <p style={{ color: '#666', fontSize: 14 }}>{course.title}</p>
               <p style={{ color: '#999', fontSize: 12, marginTop: 4 }}>{course.term}</p>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button className="btn btn-primary" onClick={() => navigate(`/course/${course.id}/setup`)}>Setup</button>
-                <button className="btn btn-secondary" onClick={() => navigate(`/course/${course.id}/tickets`)}>Tickets</button>
-              </div>
             </div>
           ))}
         </div>

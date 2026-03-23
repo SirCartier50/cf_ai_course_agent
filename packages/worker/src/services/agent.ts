@@ -37,7 +37,6 @@ STRICT RULES:
 
 You have access to the following tools to look up information. Use them before answering.`;
 
-// Build the system prompt with professor's custom rules
 function buildSystemPrompt(agentRules: string | null, agentPersona: string | null): string {
   let prompt = BASE_SYSTEM_PROMPT;
 
@@ -52,99 +51,121 @@ function buildSystemPrompt(agentRules: string | null, agentPersona: string | nul
   return prompt;
 }
 
-// Agent tool definitions
 const TOOLS = [
   {
-    name: 'lookup_syllabus_policy',
-    description: 'Look up a specific policy from the course syllabus.',
-    parameters: {
-      type: 'object',
-      properties: {
-        category: {
-          type: 'string',
-          enum: ['late_work', 'attendance', 'academic_integrity', 'makeup_exam', 'grading_scale', 'extra_credit', 'other'],
+    type: 'function' as const,
+    function: {
+      name: 'lookup_syllabus_policy',
+      description: 'Look up a specific policy from the course syllabus.',
+      parameters: {
+        type: 'object',
+        properties: {
+          category: {
+            type: 'string',
+            enum: ['late_work', 'attendance', 'academic_integrity', 'makeup_exam', 'grading_scale', 'extra_credit', 'other'],
+          },
+        },
+        required: ['category'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'lookup_deadlines',
+      description: 'Look up upcoming deadlines for the course.',
+      parameters: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: ['assignment', 'exam', 'quiz', 'project', 'all'] },
         },
       },
-      required: ['category'],
     },
   },
   {
-    name: 'lookup_deadlines',
-    description: 'Look up upcoming deadlines for the course.',
-    parameters: {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['assignment', 'exam', 'quiz', 'project', 'all'] },
-      },
+    type: 'function' as const,
+    function: {
+      name: 'lookup_grading_weights',
+      description: 'Look up the grading weight breakdown for the course.',
+      parameters: { type: 'object', properties: {} },
     },
   },
   {
-    name: 'lookup_grading_weights',
-    description: 'Look up the grading weight breakdown for the course.',
-    parameters: { type: 'object', properties: {} },
-  },
-  {
-    name: 'lookup_office_hours',
-    description: 'Look up office hours for the course.',
-    parameters: { type: 'object', properties: {} },
-  },
-  {
-    name: 'search_knowledge_base',
-    description: 'Search previously answered questions for this course.',
-    parameters: {
-      type: 'object',
-      properties: {
-        query: { type: 'string', description: 'The search query' },
-      },
-      required: ['query'],
+    type: 'function' as const,
+    function: {
+      name: 'lookup_office_hours',
+      description: 'Look up office hours for the course.',
+      parameters: { type: 'object', properties: {} },
     },
   },
   {
-    name: 'calculate_grade_scenario',
-    description: 'Calculate what grade a student needs on remaining assessments to achieve a target grade.',
-    parameters: {
-      type: 'object',
-      properties: {
-        current_grades: {
-          type: 'string',
-          description: 'JSON string of current grades, e.g. [{"component":"Midterm","score":85}]',
+    type: 'function' as const,
+    function: {
+      name: 'search_knowledge_base',
+      description: 'Search previously answered questions for this course.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'The search query' },
         },
-        target_grade: { type: 'string', enum: ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'D', 'F'] },
+        required: ['query'],
       },
-      required: ['current_grades', 'target_grade'],
     },
   },
   {
-    name: 'search_course_materials',
-    description: 'Search lecture notes, slides, and course materials for relevant information. Use this when students ask about concepts covered in lectures.',
-    parameters: {
-      type: 'object',
-      properties: {
-        query: { type: 'string', description: 'The search query' },
-        type: { type: 'string', enum: ['lecture_notes', 'slides', 'resource', 'all'] },
-      },
-      required: ['query'],
-    },
-  },
-  {
-    name: 'create_ticket',
-    description: 'Escalate to the professor by creating a ticket. Use when the question cannot be confidently answered or requires human judgment.',
-    parameters: {
-      type: 'object',
-      properties: {
-        category: {
-          type: 'string',
-          enum: ['makeup_request', 'grade_dispute', 'extension_request', 'clarification', 'accommodation', 'other'],
+    type: 'function' as const,
+    function: {
+      name: 'calculate_grade_scenario',
+      description: 'Calculate what grade a student needs on remaining assessments to achieve a target grade.',
+      parameters: {
+        type: 'object',
+        properties: {
+          current_grades: {
+            type: 'string',
+            description: 'JSON string of current grades, e.g. [{"component":"Midterm","score":85}]',
+          },
+          target_grade: { type: 'string', enum: ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'D', 'F'] },
         },
-        subject: { type: 'string' },
-        description: { type: 'string' },
+        required: ['current_grades', 'target_grade'],
       },
-      required: ['category', 'subject', 'description'],
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'search_course_materials',
+      description: 'Search lecture notes, slides, and course materials for relevant information. Use this when students ask about concepts covered in lectures.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'The search query' },
+          type: { type: 'string', enum: ['lecture_notes', 'slides', 'resource', 'all'] },
+        },
+        required: ['query'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'create_ticket',
+      description: 'Escalate to the professor by creating a ticket. Use when the question cannot be confidently answered or requires human judgment.',
+      parameters: {
+        type: 'object',
+        properties: {
+          category: {
+            type: 'string',
+            enum: ['makeup_request', 'grade_dispute', 'extension_request', 'clarification', 'accommodation', 'other'],
+          },
+          subject: { type: 'string' },
+          description: { type: 'string' },
+        },
+        required: ['category', 'subject', 'description'],
+      },
     },
   },
 ];
 
-// Tool implementations
 async function executeTool(
   toolName: string,
   args: Record<string, unknown>,
@@ -155,16 +176,20 @@ async function executeTool(
 ): Promise<unknown> {
   switch (toolName) {
     case 'lookup_syllabus_policy': {
-      const syllabus = await env.DB.prepare('SELECT id FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string }>();
+      const syllabus = await env.DB.prepare('SELECT id, raw_text FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string; raw_text: string }>();
       if (!syllabus) return { error: 'No syllabus uploaded for this course' };
       const policies = await env.DB.prepare(
         'SELECT category, policy_text, conditions FROM syllabus_policies WHERE syllabus_id = ? AND category = ?'
       ).bind(syllabus.id, args.category).all();
-      return policies.results.length > 0 ? policies.results : { message: 'No policy found for this category' };
+      if (policies.results.length > 0) return policies.results;
+      if (syllabus.raw_text) {
+        return { raw_syllabus: syllabus.raw_text, note: 'Structured policies not extracted yet. Use the raw syllabus text to find the relevant policy.' };
+      }
+      return { message: 'No policy found for this category' };
     }
 
     case 'lookup_deadlines': {
-      const syllabus = await env.DB.prepare('SELECT id FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string }>();
+      const syllabus = await env.DB.prepare('SELECT id, raw_text FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string; raw_text: string }>();
       if (!syllabus) return { error: 'No syllabus uploaded' };
       let query = 'SELECT title, type, due_date, weight, description FROM syllabus_deadlines WHERE syllabus_id = ?';
       const params: string[] = [syllabus.id];
@@ -174,25 +199,37 @@ async function executeTool(
       }
       query += " AND due_date >= datetime('now') ORDER BY due_date ASC";
       const deadlines = await env.DB.prepare(query).bind(...params).all();
-      return deadlines.results;
+      if (deadlines.results.length > 0) return deadlines.results;
+      if (syllabus.raw_text) {
+        return { raw_syllabus: syllabus.raw_text, note: 'Structured deadlines not extracted yet. Use the raw syllabus text to find deadlines.' };
+      }
+      return [];
     }
 
     case 'lookup_grading_weights': {
-      const syllabus = await env.DB.prepare('SELECT id FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string }>();
+      const syllabus = await env.DB.prepare('SELECT id, raw_text FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string; raw_text: string }>();
       if (!syllabus) return { error: 'No syllabus uploaded' };
       const weights = await env.DB.prepare(
         'SELECT component, weight, drop_lowest FROM syllabus_grading_weights WHERE syllabus_id = ?'
       ).bind(syllabus.id).all();
-      return weights.results;
+      if (weights.results.length > 0) return weights.results;
+      if (syllabus.raw_text) {
+        return { raw_syllabus: syllabus.raw_text, note: 'Structured grading weights not extracted yet. Use the raw syllabus text to find grading breakdown.' };
+      }
+      return [];
     }
 
     case 'lookup_office_hours': {
-      const syllabus = await env.DB.prepare('SELECT id FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string }>();
+      const syllabus = await env.DB.prepare('SELECT id, raw_text FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string; raw_text: string }>();
       if (!syllabus) return { error: 'No syllabus uploaded' };
       const hours = await env.DB.prepare(
         'SELECT instructor, day_of_week, start_time, end_time, location, is_virtual FROM syllabus_office_hours WHERE syllabus_id = ?'
       ).bind(syllabus.id).all();
-      return hours.results;
+      if (hours.results.length > 0) return hours.results;
+      if (syllabus.raw_text) {
+        return { raw_syllabus: syllabus.raw_text, note: 'Structured office hours not extracted yet. Use the raw syllabus text to find office hours.' };
+      }
+      return [];
     }
 
     case 'search_knowledge_base': {
@@ -204,7 +241,7 @@ async function executeTool(
     }
 
     case 'calculate_grade_scenario': {
-      const syllabus = await env.DB.prepare('SELECT id FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string }>();
+      const syllabus = await env.DB.prepare('SELECT id, raw_text FROM syllabi WHERE course_id = ?').bind(courseId).first<{ id: string; raw_text: string }>();
       if (!syllabus) return { error: 'No syllabus uploaded' };
       const weights = await env.DB.prepare(
         'SELECT component, weight FROM syllabus_grading_weights WHERE syllabus_id = ?'
@@ -217,11 +254,19 @@ async function executeTool(
       };
       const targetScore = gradeScale[args.target_grade as string] || 0;
 
+      if (weights.results.length > 0) {
+        return {
+          grading_weights: weights.results,
+          current_grades: currentGrades,
+          target_minimum_score: targetScore,
+          note: 'Use the weights and current grades to calculate what the student needs.',
+        };
+      }
       return {
-        grading_weights: weights.results,
+        raw_syllabus: syllabus.raw_text || '',
         current_grades: currentGrades,
         target_minimum_score: targetScore,
-        note: 'Use the weights and current grades to calculate what the student needs.',
+        note: 'Structured grading weights not extracted. Use the raw syllabus text to find grading breakdown and calculate.',
       };
     }
 
@@ -269,28 +314,23 @@ async function executeTool(
   }
 }
 
-// Helper: AI call with timeout
-async function aiWithTimeout(env: Env, model: string, params: any, timeoutMs = 30000): Promise<any> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+async function aiCall(env: Env, model: string, params: any): Promise<any> {
   try {
-    const result = await env.AI.run(model as any, { ...params, signal: controller.signal });
+    const result = await env.AI.run(model as any, params);
     return result;
-  } finally {
-    clearTimeout(timer);
+  } catch (err: any) {
+    console.error('AI call failed:', err?.message || err);
+    throw new Error(`AI call failed: ${err?.message || 'Unknown error'}`);
   }
 }
 
-// Main agent runner
 export async function runAgent(input: AgentInput): Promise<AgentResponse> {
   const { env, courseId, userId, conversationId, userMessage } = input;
 
-  // Check if syllabus exists
   const syllabus = await env.DB.prepare(
     'SELECT id, status FROM syllabi WHERE course_id = ?'
   ).bind(courseId).first<{ id: string; status: string }>();
 
-  // Get course agent rules
   const course = await env.DB.prepare(
     'SELECT agent_rules, agent_persona FROM courses WHERE id = ?'
   ).bind(courseId).first<{ agent_rules: string | null; agent_persona: string | null }>();
@@ -301,7 +341,6 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
     systemPrompt += '\n\nIMPORTANT: No syllabus has been uploaded for this course yet. If the student asks about policies, deadlines, grading, or office hours, let them know that the syllabus has not been uploaded yet and suggest they contact their professor directly. You can still help with general questions.';
   }
 
-  // Get conversation history (last 10 messages for context)
   const history = await env.DB.prepare(
     'SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 10'
   ).bind(conversationId).all<{ role: string; content: string }>();
@@ -312,8 +351,7 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
     { role: 'user', content: userMessage },
   ];
 
-  // First LLM call with tools
-  const response = await aiWithTimeout(env, '@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+  const response = await aiCall(env, '@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
     messages,
     tools: TOOLS,
   });
@@ -323,41 +361,54 @@ export async function runAgent(input: AgentInput): Promise<AgentResponse> {
   let escalated = false;
   let ticketId: string | undefined;
 
-  // Check if the model wants to use tools
   const aiResponse = response as any;
 
   if (aiResponse.tool_calls && aiResponse.tool_calls.length > 0) {
-    // Execute each tool call
     for (const toolCall of aiResponse.tool_calls) {
+      const fnName = toolCall.function?.name || toolCall.name;
+      const fnArgs = toolCall.function?.arguments
+        ? (typeof toolCall.function.arguments === 'string' ? JSON.parse(toolCall.function.arguments) : toolCall.function.arguments)
+        : (toolCall.arguments || {});
+
       const result = await executeTool(
-        toolCall.name,
-        toolCall.arguments || {},
+        fnName,
+        fnArgs,
         env, courseId, userId, conversationId
       );
 
       toolCalls.push({
-        name: toolCall.name,
-        arguments: toolCall.arguments || {},
+        name: fnName,
+        arguments: fnArgs,
         result,
       });
 
-      if (toolCall.name === 'create_ticket') {
+      if (fnName === 'create_ticket') {
         escalated = true;
         ticketId = (result as any).ticket_id;
       }
     }
 
-    // Second LLM call with tool results
-    const toolResultMessages = toolCalls.map((tc) => ({
-      role: 'tool' as const,
-      content: JSON.stringify(tc.result),
-      name: tc.name,
+    const normalizedToolCalls = aiResponse.tool_calls.map((tc: any, i: number) => ({
+      id: tc.id || `call_${i}`,
+      type: 'function',
+      function: {
+        name: tc.function?.name || tc.name,
+        arguments: tc.function?.arguments
+          ? (typeof tc.function.arguments === 'string' ? tc.function.arguments : JSON.stringify(tc.function.arguments))
+          : JSON.stringify(tc.arguments || {}),
+      },
     }));
 
-    const followUp = await aiWithTimeout(env, '@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+    const toolResultMessages = normalizedToolCalls.map((tc: any, i: number) => ({
+      role: 'tool' as const,
+      tool_call_id: tc.id,
+      content: JSON.stringify(toolCalls[i].result),
+    }));
+
+    const followUp = await aiCall(env, '@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
       messages: [
         ...messages,
-        { role: 'assistant', content: '', tool_calls: aiResponse.tool_calls },
+        { role: 'assistant', content: '', tool_calls: normalizedToolCalls },
         ...toolResultMessages,
       ],
     });

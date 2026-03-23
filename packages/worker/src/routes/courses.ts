@@ -6,9 +6,8 @@ export const courseRoutes = new Hono<{ Bindings: Env }>();
 
 courseRoutes.use('*', requireAuth());
 
-// Generate a short random key like "CSE183-A7X9"
 function generateCourseKey(code: string): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let suffix = '';
   for (let i = 0; i < 6; i++) {
     suffix += chars[Math.floor(Math.random() * chars.length)];
@@ -16,7 +15,6 @@ function generateCourseKey(code: string): string {
   return `${code.toUpperCase()}-${suffix}`;
 }
 
-// Generate a student course ID like "STU-A3X9K2"
 function generateStudentCourseId(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let id = 'STU-';
@@ -26,8 +24,6 @@ function generateStudentCourseId(): string {
   return id;
 }
 
-// Create course (professor only)
-// Professor provides: code, title, term, student emails, agent rules
 courseRoutes.post('/', requireRole('professor'), async (c) => {
   const { code, title, term, student_emails, agent_rules, agent_persona } = await c.req.json();
   const professorId = c.get('userId');
@@ -43,12 +39,10 @@ courseRoutes.post('/', requireRole('professor'), async (c) => {
   const courseId = crypto.randomUUID();
   const courseKey = generateCourseKey(code);
 
-  // Create the course
   await c.env.DB.prepare(
     'INSERT INTO courses (id, code, title, term, professor_id, course_key, agent_rules, agent_persona) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(courseId, code, title, term, professorId, courseKey, agent_rules || null, agent_persona || null).run();
 
-  // Pre-populate student roster with generated IDs
   const studentRoster: { email: string; student_course_id: string }[] = [];
   const stmts = [];
 
@@ -76,14 +70,12 @@ courseRoutes.post('/', requireRole('professor'), async (c) => {
   }, 201);
 });
 
-// List courses for current user
 courseRoutes.get('/', async (c) => {
   const userId = c.get('userId');
   const role = c.get('userRole');
 
   let courses;
   if (role === 'professor') {
-    // Don't return course_key in list — it's sensitive
     courses = await c.env.DB.prepare(
       'SELECT id, code, title, term, professor_id, created_at FROM courses WHERE professor_id = ? ORDER BY created_at DESC'
     ).bind(userId).all();
@@ -99,7 +91,6 @@ courseRoutes.get('/', async (c) => {
   return c.json({ courses: courses.results });
 });
 
-// Get single course
 courseRoutes.get('/:courseId', async (c) => {
   const courseId = c.req.param('courseId');
   const course = await c.env.DB.prepare('SELECT * FROM courses WHERE id = ?').bind(courseId).first();
@@ -111,7 +102,6 @@ courseRoutes.get('/:courseId', async (c) => {
   return c.json({ course });
 });
 
-// Get student roster (professor only)
 courseRoutes.get('/:courseId/roster', requireRole('professor'), async (c) => {
   const courseId = c.req.param('courseId');
 
@@ -126,7 +116,6 @@ courseRoutes.get('/:courseId/roster', requireRole('professor'), async (c) => {
   return c.json({ students: students.results });
 });
 
-// Reveal course key (professor only, requires password)
 courseRoutes.post('/:courseId/reveal-key', requireRole('professor'), async (c) => {
   const courseId = c.req.param('courseId');
   const userId = c.get('userId');
@@ -136,7 +125,6 @@ courseRoutes.post('/:courseId/reveal-key', requireRole('professor'), async (c) =
     return c.json({ error: 'Password is required to reveal the course key' }, 400);
   }
 
-  // Verify course ownership
   const course = await c.env.DB.prepare(
     'SELECT id, course_key FROM courses WHERE id = ? AND professor_id = ?'
   ).bind(courseId, userId).first<{ id: string; course_key: string }>();
@@ -145,7 +133,6 @@ courseRoutes.post('/:courseId/reveal-key', requireRole('professor'), async (c) =
     return c.json({ error: 'Course not found or not authorized' }, 404);
   }
 
-  // Verify password
   const user = await c.env.DB.prepare(
     'SELECT password_hash FROM users WHERE id = ?'
   ).bind(userId).first<{ password_hash: string }>();
@@ -164,8 +151,6 @@ courseRoutes.post('/:courseId/reveal-key', requireRole('professor'), async (c) =
   return c.json({ course_key: course.course_key });
 });
 
-// Enroll in course (student only)
-// Student provides: course_key + their student_course_id
 courseRoutes.post('/enroll', requireRole('student'), async (c) => {
   const { course_key, student_course_id } = await c.req.json();
   const userId = c.get('userId');
@@ -175,7 +160,6 @@ courseRoutes.post('/enroll', requireRole('student'), async (c) => {
     return c.json({ error: 'course_key and student_course_id are required' }, 400);
   }
 
-  // Find the course by key
   const course = await c.env.DB.prepare(
     'SELECT id, code, title FROM courses WHERE course_key = ?'
   ).bind(course_key).first<{ id: string; code: string; title: string }>();
@@ -184,7 +168,6 @@ courseRoutes.post('/enroll', requireRole('student'), async (c) => {
     return c.json({ error: 'Course not found. Check the course key and try again.' }, 404);
   }
 
-  // Find the student entry by student_course_id
   const studentEntry = await c.env.DB.prepare(
     'SELECT id, email, enrolled, user_id FROM course_students WHERE student_course_id = ? AND course_id = ?'
   ).bind(student_course_id, course.id).first<{ id: string; email: string; enrolled: number; user_id: string | null }>();
@@ -193,17 +176,14 @@ courseRoutes.post('/enroll', requireRole('student'), async (c) => {
     return c.json({ error: 'Student ID not found for this course. Contact your professor.' }, 404);
   }
 
-  // Check if already enrolled
   if (studentEntry.enrolled === 1) {
     return c.json({ error: 'This student ID is already enrolled in this course.' }, 409);
   }
 
-  // Enroll: update the record with the user's account and mark enrolled
   await c.env.DB.prepare(
     "UPDATE course_students SET enrolled = 1, user_id = ?, enrolled_at = datetime('now') WHERE id = ?"
   ).bind(userId, studentEntry.id).run();
 
-  // Create student profile for this course
   await c.env.DB.prepare(
     'INSERT INTO student_profiles (id, user_id, course_id) VALUES (?, ?, ?)'
   ).bind(crypto.randomUUID(), userId, course.id).run();

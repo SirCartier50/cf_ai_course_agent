@@ -34,7 +34,6 @@ export function CourseDashboard() {
 
   return (
     <div className="container">
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <button
           className="btn btn-secondary"
@@ -49,7 +48,6 @@ export function CourseDashboard() {
         </div>
       </div>
 
-      {/* Ask the AI TA Button */}
       <div className="card" style={{ marginBottom: 20, textAlign: 'center', padding: 24 }}>
         <h3 style={{ marginBottom: 8 }}>Need help with this course?</h3>
         <p style={{ color: '#666', fontSize: 14, marginBottom: 16 }}>
@@ -64,7 +62,6 @@ export function CourseDashboard() {
         </button>
       </div>
 
-      {/* Announcements Section */}
       <div className="card" style={{ marginBottom: 20 }}>
         <h3 style={{ marginBottom: 12 }}>Announcements</h3>
         {announcements.length === 0 ? (
@@ -84,7 +81,6 @@ export function CourseDashboard() {
         )}
       </div>
 
-      {/* Course Materials Section */}
       <div className="card" style={{ marginBottom: 20 }}>
         <h3 style={{ marginBottom: 12 }}>Course Materials</h3>
         {materials.length === 0 ? (
@@ -107,7 +103,6 @@ export function CourseDashboard() {
         )}
       </div>
 
-      {/* Upcoming Deadlines Section */}
       <div className="card" style={{ marginBottom: 20 }}>
         <h3 style={{ marginBottom: 12 }}>Upcoming Deadlines</h3>
         {deadlines.length === 0 ? (
