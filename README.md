@@ -2,6 +2,8 @@
 
 An AI-powered course assistant platform built on Cloudflare's developer stack. Professors upload syllabi and course materials, an AI agent parses them, and students interact with an agentic AI TA through chat. The AI answers questions using syllabus policies, deadlines, and lecture materials — and escalates anything it can't handle into a ticket system for the professor.
 
+**Live Demo**: https://course-agent.pages.dev
+
 ## Features
 
 ### For Professors
@@ -32,7 +34,6 @@ cf_ai_course_agent/
 ├── packages/
 │   ├── worker/          # Cloudflare Worker (API + AI agent)
 │   └── web/             # React frontend (Vite)
-├── test-data/           # Sample syllabus and lecture materials for testing
 └── package.json         # npm workspaces monorepo
 ```
 
